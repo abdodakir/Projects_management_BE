@@ -83,3 +83,69 @@ class Professor(models.Model):
 
     def __str__(self):
         return self.prof_name
+
+class Topic(models.Model):
+    """
+    """
+    to_subject = models.CharField(max_length=50, default='')
+    to_project_id = models.ForeignKey(Project, verbose_name="to_projectId", on_delete=models.CASCADE)
+    to_group_id = models.ForeignKey(Group, verbose_name="to_groupId", on_delete=models.CASCADE)
+    
+    class Meta:
+        ordering = ('to_subject',)
+
+    def __str__(self):
+        return self.to_subject
+
+class Student_class(models.Model):
+    """
+        This class represents the relationship between students and the class where they study
+    """
+    stc_student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
+    stc_class_id = models.ForeignKey(Classe, on_delete=models.CASCADE)
+    stc_year = models.CharField(("stc_year"), max_length=50, default='')
+
+    class Meta:
+        ordering = ('stc_year',)
+
+    def __str__(self):
+        return self.stc_year
+
+class Professor_class(models.Model):
+    """
+    """
+    pc_prof_id = models.ForeignKey(Professor, on_delete=models.CASCADE)
+    pc_class_id = models.ForeignKey(Classe, on_delete=models.CASCADE)
+    pc_year = models.CharField(("pc_year"), max_length=50, default='')
+
+    class Meta:
+        ordering = ('pc_year',)
+
+    def __str__(self):
+        return self.pc_year
+
+class Group_student(models.Model):
+    """
+    """
+    gs_student_id = models.ForeignKey(Student, verbose_name="gs_studentId", on_delete=models.CASCADE)
+    gs_group_id = models.ForeignKey(Group, verbose_name="gs_groupId", on_delete=models.CASCADE)
+    gs_date = models.DateTimeField(("gs_createdDate"), default=timezone.now)
+    
+    class Meta:
+        ordering = ('gs_date',)
+
+    def __str__(self):
+        return self.gs_date
+
+class Group_project(models.Model):
+    """
+    """
+    gp_project_id = models.ForeignKey(Project, verbose_name="gp_projectId", on_delete=models.CASCADE)
+    gp_group_id = models.ForeignKey(Group, verbose_name="gp_groupId", on_delete=models.CASCADE)
+    gp_date = models.DateTimeField(("gp_createdDate"), default=timezone.now)
+    
+    class Meta:
+        ordering = ('stc_year',)
+
+    def __str__(self):
+        return self.stc_year
