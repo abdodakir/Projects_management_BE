@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'projects',
 ]
 
 MIDDLEWARE = [
@@ -74,12 +75,13 @@ WSGI_APPLICATION = 'projects_man.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-        'default': {
-        'ENGINE': 'djongo',
-        'NAME': 'projects',
-        'HOST': 'mongodb+srv://dakir:dakir1995@cluster0-g6otc.mongodb.net/test?retryWrites=true&w=majority',
-        'USER': 'dakir',
-        'PASSWORD': 'dakir1995',
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'projects_db',
+        'USER': 'root',
+        'PASSWORD': 'root',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
 
