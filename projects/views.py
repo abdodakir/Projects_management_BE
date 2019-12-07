@@ -8,7 +8,7 @@ from django.contrib.auth.hashers import make_password, check_password
 import datetime
 import json
 from projects.models import *
-from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 def currentTime():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -55,11 +55,16 @@ def student_singup(request):
 
 @require_http_methods(["GET","POST"])
 def student_singin(request):
+    data = json.loads(request.body)
     if request.method == 'POST':
-        data = json.loads(request.body)
-        print("**"*20)
-        print(data)
-        print("**"*20)
-        return JsonResponse(data, safe=False)
+        if data.get("st_username") != None and Student.objects.filter(st_username=data.get("st_username")).exists():
+            student = Student.objects.filter(st_username=data.get("st_username")).values()
+            #student != None and 
+            if check_password(data.get("st_password"), student[0]["st_password"]):
+                return JsonResponse({"success": True, "student": list(student)}, safe=False)
+            else:
+                return JsonResponse({"success": False, "message": "wrong username or password!"}, safe=False)    
+        else:
+            return JsonResponse({"success": False, "message": "wrong username or password!"}, safe=False)
     return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
 
