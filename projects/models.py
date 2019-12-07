@@ -7,7 +7,7 @@ class Student(models.Model):
     """
     st_name = models.CharField(max_length=50, default='')
     st_username = models.CharField(max_length=50, default='')
-    st_password = models.CharField(max_length=50, default='')
+    st_password = models.CharField(max_length=100, default='')
     st_created_date = models.DateTimeField(("st_createdDate"), default=timezone.now)
     st_email = models.EmailField(max_length=254, blank=True)
     st_school_year = models.CharField(("st_scYear"), max_length=50, default='')
@@ -33,7 +33,7 @@ class Classe(models.Model):
     def __str__(self):
         return self.cl_name
 
-class Group(modelsModel):
+class Group(models.Model):
     """
         This class represents a group of students
     """
@@ -50,25 +50,9 @@ class Group(modelsModel):
     def __str__(self):
         return self.gr_name
 
-class Project(models.Model):
-    """
-    """
-    pr_name = models.CharField(max_length=50, default='')
-    pr_description = models.CharField(max_length=200, default='')
-    pr_files = models.FileField(upload_to=None, max_length=100)
-    pr_created_date = models.DateTimeField(("pr_createdDate"), default=timezone.now)
-    pr_end_date = models.DateTimeField(("pr_endDate"), default=timezone.now)
-    pr_list_classes_id = ""
-    pr_prof_id = models.ForeignKey(Professor, verbose_name="pr_prof", on_delete=models.CASCADE)
-
-    class Meta:
-        ordering = ('pr_name',)
-
-    def __str__(self):
-        return self.pr_name
-
 class Professor(models.Model):
     """
+        This class represents the professor entity at school
     """
     prof_name = models.CharField(max_length=50, default='')
     prof_username = models.CharField(max_length=50, default='')
@@ -84,8 +68,27 @@ class Professor(models.Model):
     def __str__(self):
         return self.prof_name
 
+class Project(models.Model):
+    """
+        This class represents the projet entity created by professor
+    """
+    pr_name = models.CharField(max_length=50, default='')
+    pr_description = models.CharField(max_length=200, default='')
+    pr_files = models.FileField(upload_to=None, max_length=100)
+    pr_created_date = models.DateTimeField(("pr_createdDate"), default=timezone.now)
+    pr_end_date = models.DateTimeField(("pr_endDate"), default=timezone.now)
+    pr_list_classes_id = ""
+    pr_prof_id = models.ForeignKey(Professor, verbose_name="pr_prof", on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('pr_name',)
+
+    def __str__(self):
+        return self.pr_name
+
 class Topic(models.Model):
     """
+            
     """
     to_subject = models.CharField(max_length=50, default='')
     to_project_id = models.ForeignKey(Project, verbose_name="to_projectId", on_delete=models.CASCADE)
@@ -145,7 +148,7 @@ class Group_project(models.Model):
     gp_date = models.DateTimeField(("gp_createdDate"), default=timezone.now)
     
     class Meta:
-        ordering = ('stc_year',)
+        ordering = ('gp_date',)
 
     def __str__(self):
-        return self.stc_year
+        return self.gp_date
