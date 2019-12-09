@@ -1,20 +1,22 @@
 from django.db import models
 from django.utils import timezone
 
-class Student(models.Model):
+class User(models.Model):
     """
-        This class represents the student entity
+        This class represents the User entity (Student or Professor)
     """
-    st_name = models.CharField(max_length=50, default='')
-    st_username = models.CharField(max_length=50, default='')
-    st_password = models.CharField(max_length=100, default='')
-    st_created_date = models.DateTimeField(("st_createdDate"), default=timezone.now)
-    st_email = models.EmailField(max_length=254, blank=True)
-    st_school_year = models.CharField(("st_scYear"), max_length=50, default='')
-    st_phone = models.CharField(max_length=50, default='')
+    p_name = models.CharField(max_length=50, default='')
+    p_username = models.CharField(max_length=50, default='')
+    p_password = models.CharField(max_length=100, default='')
+    p_created_date = models.DateTimeField(("st_createdDate"), default=timezone.now)
+    p_email = models.EmailField(max_length=254, blank=True)
+    p_school_year = models.CharField(("st_scYear"), max_length=50, default='')
+    p_phone = models.CharField(max_length=50, default='')
+    p_type = models.CharField(max_length=50, default='student')
 
     class Meta:
-        ordering = ('st_name',)
+        ordering = ('p_name',)
+        unique_together = ['p_username']
 
     def __str__(self):
         return self.st_name
@@ -42,31 +44,13 @@ class Group(models.Model):
     gr_validated = models.BooleanField()
     gr_created_date = models.DateTimeField(("gr_createdDate"), default=timezone.now)
     gr_school_year = models.CharField(("gr_scYear"), max_length=50, default='')
-    gr_created_by = models.ForeignKey(Student, on_delete=models.CASCADE)
+    gr_created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ('gr_name',)
 
     def __str__(self):
         return self.gr_name
-
-class Professor(models.Model):
-    """
-        This class represents the professor entity at school
-    """
-    prof_name = models.CharField(max_length=50, default='')
-    prof_username = models.CharField(max_length=50, default='')
-    prof_password = models.CharField(max_length=50, default='')
-    prof_created_date = models.DateTimeField(("prof_createdDate"), default=timezone.now)
-    prof_email = models.EmailField(max_length=254, blank=True)
-    prof_school_year = models.CharField(("prof_scYear"), max_length=50, default='')
-    prof_phone = models.CharField(max_length=50, default='')
-
-    class Meta:
-        ordering = ('prof_name',)
-
-    def __str__(self):
-        return self.prof_name
 
 class Project(models.Model):
     """
@@ -78,7 +62,7 @@ class Project(models.Model):
     pr_created_date = models.DateTimeField(("pr_createdDate"), default=timezone.now)
     pr_end_date = models.DateTimeField(("pr_endDate"), default=timezone.now)
     pr_list_classes_id = ""
-    pr_prof_id = models.ForeignKey(Professor, verbose_name="pr_prof", on_delete=models.CASCADE)
+    pr_prof_id = models.ForeignKey(User, verbose_name="pr_prof", on_delete=models.CASCADE)
 
     class Meta:
         ordering = ('pr_name',)
@@ -104,7 +88,7 @@ class Student_class(models.Model):
     """
         This class represents the relationship between students and the class where they study
     """
-    stc_student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
+    stc_student_id = models.ForeignKey(User, on_delete=models.CASCADE)
     stc_class_id = models.ForeignKey(Classe, on_delete=models.CASCADE)
     stc_year = models.CharField(("stc_year"), max_length=50, default='')
 
@@ -117,7 +101,7 @@ class Student_class(models.Model):
 class Professor_class(models.Model):
     """
     """
-    pc_prof_id = models.ForeignKey(Professor, on_delete=models.CASCADE)
+    pc_prof_id = models.ForeignKey(User, on_delete=models.CASCADE)
     pc_class_id = models.ForeignKey(Classe, on_delete=models.CASCADE)
     pc_year = models.CharField(("pc_year"), max_length=50, default='')
 
@@ -130,7 +114,7 @@ class Professor_class(models.Model):
 class Group_student(models.Model):
     """
     """
-    gs_student_id = models.ForeignKey(Student, verbose_name="gs_studentId", on_delete=models.CASCADE)
+    gs_student_id = models.ForeignKey(User, verbose_name="gs_studentId", on_delete=models.CASCADE)
     gs_group_id = models.ForeignKey(Group, verbose_name="gs_groupId", on_delete=models.CASCADE)
     gs_date = models.DateTimeField(("gs_createdDate"), default=timezone.now)
     

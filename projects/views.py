@@ -8,44 +8,47 @@ from django.contrib.auth.hashers import make_password, check_password
 import datetime
 import json
 from projects.models import *
-from django.core.exceptions import ObjectDoesNotExist
 
 def currentTime():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 @require_http_methods(["POST"])
-def student_singup(request):
+def register(request):
     data = json.loads(request.body)
     kwargs = {}
-    kwargs["st_created_date"] = currentTime()
+    kwargs["p_created_date"] = currentTime()
     if "action" in data and data.get("action") == "create":
-        if data.get("st_name") != None:
-            kwargs["st_name"] = data.get("st_name")
+        if data.get("p_name") != None:
+            kwargs["p_name"] = data.get("p_name")
         else:
             return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("st_username") != None:
-            kwargs["st_username"] = data.get("st_username")
+        if data.get("p_username") != None and not User.objects.filter(p_username=data.get("p_username")).exists():
+            kwargs["p_username"] = data.get("p_username")
+        else:
+            return JsonResponse({"success": False, "message": "Username already exist!"}, safe=False)
+        if data.get("p_password") != None:
+            kwargs["p_password"] = make_password(data.get("p_password"), salt=None, hasher='default')
         else:
             return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("st_password") != None:
-            kwargs["st_password"] = make_password(data.get("st_password"), salt=None, hasher='default')
+        if data.get("p_email") != None:
+            kwargs["p_email"] = data.get("p_email")
         else:
             return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("st_email") != None:
-            kwargs["st_email"] = data.get("st_email")
+        if data.get("p_school_year") != None:
+            kwargs["p_school_year"] = data.get("p_school_year")
         else:
             return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("st_school_year") != None:
-            kwargs["st_school_year"] = data.get("st_school_year")
+        if data.get("p_phone") != None:
+            kwargs["p_phone"] = data.get("p_phone")
         else:
             return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("st_phone") != None:
-            kwargs["st_phone"] = data.get("st_phone")
+        if data.get("p_phone") != None:
+            kwargs["p_phone"] = data.get("p_phone")
         else:
             return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        student = Student.objects.create(**kwargs)
-        student.save()
-        kwargs["student_id"]=student.id
+        user = User.objects.create(**kwargs)
+        user.save()
+        kwargs["student_id"] = user.id
         response = {
             "success": True,
             "data": kwargs
@@ -54,14 +57,13 @@ def student_singup(request):
     return JsonResponse(response, safe=False)
 
 @require_http_methods(["GET","POST"])
-def student_singin(request):
+def login(request):
     data = json.loads(request.body)
     if request.method == 'POST':
-        if data.get("st_username") != None and Student.objects.filter(st_username=data.get("st_username")).exists():
-            student = Student.objects.filter(st_username=data.get("st_username")).values()
-            #student != None and 
-            if check_password(data.get("st_password"), student[0]["st_password"]):
-                return JsonResponse({"success": True, "student": list(student)}, safe=False)
+        if data.get("p_username") != None and User.objects.filter(p_username=data.get("p_username")).exists():
+            user = User.objects.filter(p_username=data.get("p_username")).values()
+            if check_password(data.get("p_password"), user[0]["p_password"]):
+                return JsonResponse({"success": True, "user": list(user)}, safe=False)
             else:
                 return JsonResponse({"success": False, "message": "wrong username or password!"}, safe=False)    
         else:
