@@ -19,6 +19,8 @@ from django.views.decorators.csrf import csrf_exempt
 from projects import views
 
 urlpatterns = [
+    path('api/createGroups', csrf_exempt(views.create_group), name='create_group'),
+    path('api/groups', csrf_exempt(views.get_groups), name='groups'),
     path('api/createClasses', csrf_exempt(views.create_classes), name='create_classes'),
     path('api/classes', csrf_exempt(views.get_classes), name='classes'),
     path('api/register', csrf_exempt(views.register), name='register'),

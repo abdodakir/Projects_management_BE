@@ -70,7 +70,7 @@ def login(request):
             return JsonResponse({"success": False, "message": "wrong username or password!"}, safe=False)
     return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
 
-@require_http_methods(["GET","POST"])
+@require_http_methods(["POST"])
 def create_classes(request):
     data = json.loads(request.body)
     kwargs = {}
@@ -106,3 +106,52 @@ def get_classes(request):
             }
         return JsonResponse(response, safe=False)
     return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+
+@require_http_methods(["POST"])
+def create_group(request):
+    data = json.loads(request.body)
+    kwargs = {}
+    if request.method == 'POST':
+        kwargs["created_date"] = currentTime()
+        if data.get("gr_name", None) != None:
+            kwargs["gr_name"] = data.get("gr_name")
+        else:
+            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
+        if data.get("student_nbr", None) != None:
+            kwargs["gr_student_nbr"] = data.get("student_nbr")
+        else:
+            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
+        if data.get("school_year", None) != None:
+            kwargs["gr_school_year"] = data.get("school_year")
+        else:
+            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
+        if data.get("student_id", None) != None and User.objects.filter(id=data.get("student_id")).exists():
+            kwargs["gr_created_by"] = data.get("student_id")
+        else:
+            return JsonResponse({"success": False, "message": "User doesn't existe!"}, safe=False)
+        kwargs["gr_validated"] = False
+        group = Group.objects.create(**kwargs)
+        group.save()
+        kwargs["group_id"] = group.id
+        response = {
+            "success": True,
+            "data": kwargs
+        }
+        return JsonResponse(response, safe=False)
+    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+
+@require_http_methods(["GET"])
+def get_groups(request):
+    data = json.loads(request.body)
+    kwargs = {}
+    if request.method == 'GET':
+        if data.get("action", None) == "get_groups":
+            kwargs = data.get('data')  
+            groups = Group.objects.filter(**kwargs).values()
+            response = {
+                "success": True,
+                "data": list(groups)
+            }
+        return JsonResponse(response, safe=False)
+    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+
