@@ -54,7 +54,7 @@ def register(request):
             "data": kwargs
         }
         return JsonResponse(response, safe=False)
-    return JsonResponse(response, safe=False)
+    return JsonResponse({"success": False, "message": "missed Action!"}, safe=False)
 
 @require_http_methods(["GET","POST"])
 def login(request):
@@ -70,3 +70,39 @@ def login(request):
             return JsonResponse({"success": False, "message": "wrong username or password!"}, safe=False)
     return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
 
+@require_http_methods(["GET","POST"])
+def create_classes(request):
+    data = json.loads(request.body)
+    kwargs = {}
+    if request.method == 'POST':
+        kwargs["cl_created_year"] = currentTime()
+        if data.get("cl_name", None) != None:
+            kwargs["cl_name"] = data.get("cl_name")
+        else:
+            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
+        if data.get("cl_cycle", None) != None:
+            kwargs["cl_cycle"] = data.get("cl_cycle")
+        else:
+            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
+        classe = Classe.objects.create(**kwargs)
+        classe.save()
+        kwargs["classe_id"] = classe.id
+        response = {
+            "success": True,
+            "data": kwargs
+        }
+        return JsonResponse(response, safe=False)
+    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+
+@require_http_methods(["GET"])
+def get_classes(request):
+    data = json.loads(request.body)
+    if request.method == 'GET':
+        if data.get("action", None) == "get_classes":
+            classes = Classe.objects.filter().values()
+            response = {
+                "success": True,
+                "data": list(classes)
+            }
+        return JsonResponse(response, safe=False)
+    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
