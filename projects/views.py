@@ -1,76 +1,112 @@
 """
 """
-
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.core import serializers
 from django.contrib.auth.hashers import make_password, check_password
+
+from django.contrib.auth import authenticate, logout
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.status import ( HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_200_OK )
+from rest_framework.response import Response
+
 import datetime
 import json
+
 from projects.models import *
+from django.contrib.auth.models import User
 
 def currentTime():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-@require_http_methods(["POST"])
+@api_view(["POST"])
+@permission_classes((AllowAny,))
 def register(request):
     data = json.loads(request.body)
     kwargs = {}
-    kwargs["p_created_date"] = currentTime()
+    kwargs["date_joined"] = currentTime()
+    kwargs["last_login"] = currentTime()
+    
     if "action" in data and data.get("action") == "create":
-        if data.get("p_name") != None:
-            kwargs["p_name"] = data.get("p_name")
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("p_username") != None and not User.objects.filter(p_username=data.get("p_username")).exists():
-            kwargs["p_username"] = data.get("p_username")
-        else:
-            return JsonResponse({"success": False, "message": "Username already exist!"}, safe=False)
-        if data.get("p_password") != None:
-            kwargs["p_password"] = make_password(data.get("p_password"), salt=None, hasher='default')
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("p_email") != None:
-            kwargs["p_email"] = data.get("p_email")
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("p_school_year") != None:
-            kwargs["p_school_year"] = data.get("p_school_year")
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("p_phone") != None:
-            kwargs["p_phone"] = data.get("p_phone")
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("p_phone") != None:
-            kwargs["p_phone"] = data.get("p_phone")
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        user = User.objects.create(**kwargs)
-        user.save()
-        kwargs["student_id"] = user.id
+        user = ""
+        if data.get("username", None) == None or User.objects.filter(username=data.get("username")).exists():
+            return Response({"success": False, "message": "Username already exist!"}, status=HTTP_400_BAD_REQUEST)
+        # This should be in function in models.py under the class Users
+        # begin
+        kwargs["username"] = data.get("username")
+        
+        if data.get("firstname", None) != None:
+            kwargs["first_name"] = data.get("firstname")
+        if data.get("password", None) != None:
+            kwargs["password"] = data.get("password")
+        if data.get("lastname", None) != None:
+            kwargs["last_name"] = data.get("lastname")
+        if data.get("email", None) != None:
+            kwargs["email"] = data.get("email")
+        try:
+            user = User.objects.create_user(**kwargs)
+            user.save()
+        except User.DoesNotExist:
+            return Response({"success": False, "message": "Username already exist!"}, status=HTTP_400_BAD_REQUEST)
+        kwargs = {}
+        
+        if data.get("phone", None) != None:
+            kwargs["p_phone"] = data.get("phone")
+        if data.get("city", None) != None:
+            kwargs["p_city"] = data.get("city")
+        if data.get("country", None) != None:
+            kwargs["p_country"] = data.get("country")
+        if data.get("gender", None) != None:
+            kwargs["p_gender"] = data.get("gender")
+        if data.get("zip") != None:
+            kwargs["p_zip"] = data.get("zip")
+        
+        try:
+            users = Users.objects.create(user=user, **kwargs)
+            users.save()
+        except User.DoesNotExist:
+            return Response({"success": False, "message": "Singup failed!"}, status=501)
+        # End
         response = {
             "success": True,
-            "data": kwargs
+            "message": "you have been registered successfully"
         }
-        return JsonResponse(response, safe=False)
-    return JsonResponse({"success": False, "message": "missed Action!"}, safe=False)
+        return Response(response)
+    return Response({"success": False, "message": "missed Action!"}, status=HTTP_400_BAD_REQUEST)
 
-@require_http_methods(["GET","POST"])
+
+@api_view(["POST"])
+@permission_classes((AllowAny,))
 def login(request):
     data = json.loads(request.body)
     if request.method == 'POST':
-        if data.get("p_username") != None and User.objects.filter(p_username=data.get("p_username")).exists():
-            user = User.objects.filter(p_username=data.get("p_username")).values()
-            if check_password(data.get("p_password"), user[0]["p_password"]):
-                return JsonResponse({"success": True, "user": list(user)}, safe=False)
+        if data.get("username", None) != None and User.objects.filter(username=data.get("username")).exists():
+            user = User.objects.filter(username=data.get("username")).values()[0]
+            #For debuging: import pdb; pdb.set_trace()
+            if check_password(data.get("password"), user["password"]):
+                user = authenticate(username=data.get("username"), password=data.get("password"))
+                if not user:
+                    return Response({"success": False, "user": user})
+                token, _ = Token.objects.get_or_create(user=user)
+                users = Users.objects.filter(user_id=user.id).values()[0]
+                # should be a function
+                # Start
+                users["first_name"] = user.first_name
+                users["last_name"] = user.last_name
+                users["username"] = user.username
+                users["email"] = user.email
+                users["last_login"] = user.last_login
+                del users["p_type"]
+                # End
+                return Response({"success": True, "token": token.key, "user": users}, status=HTTP_200_OK)
             else:
-                return JsonResponse({"success": False, "message": "wrong username or password!"}, safe=False)    
+                return Response({"success": False, "message": "wrong username or password 1!"}, status=401)    
         else:
-            return JsonResponse({"success": False, "message": "wrong username or password!"}, safe=False)
-    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+            return Response({"success": False, "message": "wrong username or password 2!"}, status=401)
+    return Response({"success": False, "message": "Bed request"}, status=500)
 
-@require_http_methods(["POST"])
+# we don't need this, it's created manually by admin
+@api_view(["POST"])
 def create_classes(request):
     data = json.loads(request.body)
     kwargs = {}
@@ -79,11 +115,11 @@ def create_classes(request):
         if data.get("cl_name", None) != None:
             kwargs["cl_name"] = data.get("cl_name")
         else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
+            return Response({"success": False, "message": "missing data!"})
         if data.get("cl_cycle", None) != None:
             kwargs["cl_cycle"] = data.get("cl_cycle")
         else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
+            return Response({"success": False, "message": "missing data!"})
         classe = Classe.objects.create(**kwargs)
         classe.save()
         kwargs["classe_id"] = classe.id
@@ -91,56 +127,68 @@ def create_classes(request):
             "success": True,
             "data": kwargs
         }
-        return JsonResponse(response, safe=False)
-    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+        return Response(response)
+    return Response({"success": False, "message": "Bed request"})
 
-@require_http_methods(["GET"])
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    data = json.loads(request.body)
+    try:
+        Token.objects.filter(user_id=data["user_id"]).delete()
+    except KeyError:
+        return Response({"success": False, "message": "Bed request"}, status=500)
+    return Response({"success": True, "message": "loged out successfully"}, status=500)
+
+@api_view(["GET"])
 def get_classes(request):
     data = json.loads(request.body)
+    kwargs = {}
     if request.method == 'GET':
         if data.get("action", None) == "get_classes":
-            classes = Classe.objects.filter().values()
+            if data.get("data", None) != None:
+                kwargs = data.get("data")
+
+            classes = Classe.objects.filter(**kwargs).values()
             response = {
                 "success": True,
                 "data": list(classes)
             }
-        return JsonResponse(response, safe=False)
-    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+        return Response(response)
+    return Response({"success": False, "message": "Bed request"})
 
-@require_http_methods(["POST"])
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def create_group(request):
     data = json.loads(request.body)
-    kwargs = {}
     if request.method == 'POST':
+        kwargs = data
         kwargs["created_date"] = currentTime()
-        if data.get("gr_name", None) != None:
-            kwargs["gr_name"] = data.get("gr_name")
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("student_nbr", None) != None:
-            kwargs["gr_student_nbr"] = data.get("student_nbr")
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("school_year", None) != None:
-            kwargs["gr_school_year"] = data.get("school_year")
-        else:
-            return JsonResponse({"success": False, "message": "missing data!"}, safe=False)
-        if data.get("student_id", None) != None and User.objects.filter(id=data.get("student_id")).exists():
-            kwargs["gr_created_by"] = data.get("student_id")
-        else:
-            return JsonResponse({"success": False, "message": "User doesn't existe!"}, safe=False)
         kwargs["gr_validated"] = False
-        group = Group.objects.create(**kwargs)
-        group.save()
-        kwargs["group_id"] = group.id
+        try:
+            group = Group.objects.create(**kwargs)
+            group.save()
+            kwargs["group_id"] = group.id
+        except Group.DoesNotExist:
+            return Response({"success": False, "message": "Create Group failed"}, status=500)
         response = {
             "success": True,
             "data": kwargs
         }
-        return JsonResponse(response, safe=False)
-    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+        return Response(response)
+    return Response({"success": False, "message": "Bed request"})
 
-@require_http_methods(["GET"])
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def get_data(request):
+    data = {"test": "this that just for test!"}
+    return Response({"success": True, "message": data})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_groups(request):
     data = json.loads(request.body)
     kwargs = {}
@@ -152,6 +200,6 @@ def get_groups(request):
                 "success": True,
                 "data": list(groups)
             }
-        return JsonResponse(response, safe=False)
-    return JsonResponse({"success": False, "message": "Bed request"}, safe=False)
+        return Response(response)
+    return Response({"success": False, "message": "Bed request"})
 

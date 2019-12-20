@@ -1,26 +1,25 @@
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
-class User(models.Model):
+class Users(models.Model):
     """
         This class represents the User entity (Student or Professor)
     """
-    p_name = models.CharField(max_length=50, default='')
-    p_username = models.CharField(max_length=50, default='')
-    p_password = models.CharField(max_length=100, default='')
-    p_created_date = models.DateTimeField(("st_createdDate"), default=timezone.now)
-    p_email = models.EmailField(max_length=254, blank=True)
-    p_school_year = models.CharField(("st_scYear"), max_length=50, default='')
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     p_phone = models.CharField(max_length=50, default='')
     p_type = models.CharField(max_length=50, default='student')
+    p_city = models.CharField(max_length=50, default='')
+    p_country = models.CharField(max_length=10, default='')
+    p_gender = models.CharField(max_length=10, default='')
+    p_zip = models.CharField(max_length=10, default='')
 
     class Meta:
-        ordering = ('p_name',)
-        unique_together = ['p_username']
+        ordering = ("user",)
 
     def __str__(self):
-        return self.st_name
-
+        return self.user.first_name
+    
 class Classe(models.Model):
     """
         This class represents the classes in the school

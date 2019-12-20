@@ -25,5 +25,7 @@ urlpatterns = [
     path('api/classes', csrf_exempt(views.get_classes), name='classes'),
     path('api/register', csrf_exempt(views.register), name='register'),
     path('api/login', csrf_exempt(views.login), name='login'),
+    path('api/logout', csrf_exempt(views.logout), name='logout'),
+    path('api/data', csrf_exempt(views.get_data), name='logout'),
     path('admin/', admin.site.urls),
 ]
