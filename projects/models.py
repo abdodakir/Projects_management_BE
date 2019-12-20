@@ -4,7 +4,7 @@ from django.utils import timezone
 
 class Users(models.Model):
     """
-        This class represents the User entity (Student or Professor)
+        This class represents the User entity (Student or Professor), he extends Django User
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     p_phone = models.CharField(max_length=50, default='')

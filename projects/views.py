@@ -1,4 +1,5 @@
 """
+
 """
 from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password, check_password
@@ -22,6 +23,11 @@ def currentTime():
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def register(request):
+    """
+    User register: check if the user exist if not create the new one using User model of Django extending to Users.
+    - check that the required params exist 
+    - select just the required params to avoid errors
+    """
     data = json.loads(request.body)
     kwargs = {}
     kwargs["date_joined"] = currentTime()
@@ -78,6 +84,11 @@ def register(request):
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def login(request):
+    """
+    User login: check that the username exist and the password correct
+    - create token authentication 
+    - return the data of user
+    """
     data = json.loads(request.body)
     if request.method == 'POST':
         if data.get("username", None) != None and User.objects.filter(username=data.get("username")).exists():
@@ -133,6 +144,10 @@ def create_classes(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
+    """
+    User logout: to destroy the token authentication
+    - delete the token from database by selection the Id of the user 
+    """
     data = json.loads(request.body)
     try:
         Token.objects.filter(user_id=data["user_id"]).delete()
@@ -160,6 +175,9 @@ def get_classes(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_group(request):
+    """
+    create groups by students 
+    """
     data = json.loads(request.body)
     if request.method == 'POST':
         kwargs = data
@@ -179,7 +197,6 @@ def create_group(request):
     return Response({"success": False, "message": "Bed request"})
 
 
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def get_data(request):
@@ -190,6 +207,9 @@ def get_data(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_groups(request):
+    """
+    get the groups created & apply a filter on them.
+    """
     data = json.loads(request.body)
     kwargs = {}
     if request.method == 'GET':
